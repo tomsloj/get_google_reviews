@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.logging.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -12,25 +13,73 @@ import org.json.JSONObject;
 
 public class IDFinding
 {
-    String key = getKey();
-    String baseURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=28.636295,%2077.126851&radius=15000&type=restaurant&key=" + key;
-    String additionToURL = "&pagetoken=";
-    String nextTokenURL = null;
+    static private String key = getKey();
+    static private String baseURLfirstPart = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=";
+    static private String baseURLsecondPart = "&radius=500&type=";
+    static private String basicURLthirdPart = "&key=" + key;
+    static private String additionToURL = "&pagetoken=";
 
-    ArrayList<String> find()
+    static ArrayList<String> find( double x, double y, String type )
     {
-        String URL = baseURL;
+        String URL = baseURLfirstPart + x + ",%20" + y + baseURLsecondPart + type + basicURLthirdPart;
+        String nextTokenURL = "";
 
         ArrayList<String> list = new ArrayList<>();
-        do {
-            nextTokenURL = null;
+
+        JSONObject json = null;
+        try
+        {
+            json = JSONreader.readJsonFromUrl(URL);
+            JSONArray results = json.getJSONArray("results");
+            if(results != null) {
+
+                for(int i = 0 ; i < results.length() ; i++)
+                {
+                    JSONObject jsonObject = results.getJSONObject(i);
+                    list.add(jsonObject.getString("place_id"));
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        try
+        {
+            if( json != null )
+            {
+                nextTokenURL = json.getString("next_page_token");
+                //find(amount - list.size(), x, y, type, nextTokenURL );
+            }
+        }
+        catch (JSONException e)
+        {
+            e.printStackTrace();
+            return list;
+        }
+        return list;
+    }
+
+    static private ArrayList<String> find( double x, double y, String type, String nextToken )
+    {
+        String URL;
+
+        ArrayList<String> list = new ArrayList<>();
+
+        while( nextToken != null )
+        {
+            URL = baseURLfirstPart + x + ", " + y + baseURLsecondPart + type + basicURLthirdPart + additionToURL + nextToken;
+            System.out.println(URL);
+
             JSONObject json = null;
             try {
-                json = readJsonFromUrl(URL);
+                json = JSONreader.readJsonFromUrl(URL);
                 JSONArray results = json.getJSONArray("results");
-                if(results != null) {
-
-                    for(int i = 0 ; i < results.length() ; i++) {
+                if(results != null)
+                {
+                    for(int i = 0 ; i < results.length() ; i++)
+                    {
                         JSONObject jsonObject = results.getJSONObject(i);
                         list.add(jsonObject.getString("place_id"));
                     }
@@ -38,39 +87,24 @@ public class IDFinding
             }
             catch (IOException e)
             {
-                System.out.println("Coś poszło nie tak i nie wiem co");
+                e.printStackTrace();
             }
 
-            if( json != null )
-                nextTokenURL = json.getString("next_page_token");
-            URL = baseURL + additionToURL + nextTokenURL;
-        }while( nextTokenURL != null );
-
+            try
+            {
+                if( json != null )
+                    nextToken = json.getString("next_page_token");
+            }
+            catch (JSONException e)
+            {
+                e.printStackTrace();
+                return list;
+            }
+        }
         return list;
     }
 
-    private static String readAll(Reader rd) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        int cp;
-        while ((cp = rd.read()) != -1) {
-            sb.append((char) cp);
-        }
-        return sb.toString();
-    }
-
-    public static JSONObject readJsonFromUrl(String url) throws IOException, JSONException {
-        InputStream is = new URL(url).openStream();
-        try {
-            BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
-            String jsonText = readAll(rd);
-            JSONObject json = new JSONObject(jsonText);
-            return json;
-        } finally {
-            is.close();
-        }
-    }
-
-    String getKey() {
+    static private String getKey() {
         File file = new File("./key.txt");
 
         try
@@ -83,6 +117,5 @@ public class IDFinding
             e.printStackTrace();
             return "";
         }
-
     }
 }
