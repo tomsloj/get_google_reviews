@@ -1,17 +1,11 @@
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
-
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.logging.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class IDFinding
+class IDFinding
 {
     static private String key = getKey();
     static private String baseURLfirstPart = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=";
@@ -19,6 +13,15 @@ public class IDFinding
     static private String basicURLthirdPart = "&key=" + key;
     static private String additionToURL = "&pagetoken=";
 
+    /**
+     * method to find places around place with coordinates x, y
+     * method connect to google maps API
+     * method to searching first page of results
+     * @param x latitude
+     * @param y longitude
+     * @param type - tyope of place
+     * @return list of found places
+     */
     static ArrayList<String> find( double x, double y, String type )
     {
         String URL = baseURLfirstPart + x + ",%20" + y + baseURLsecondPart + type + basicURLthirdPart;
@@ -50,7 +53,7 @@ public class IDFinding
             if( json != null )
             {
                 nextTokenURL = json.getString("next_page_token");
-                //find(amount - list.size(), x, y, type, nextTokenURL );
+                find( x, y, type, nextTokenURL );
             }
         }
         catch (JSONException e)
@@ -61,6 +64,15 @@ public class IDFinding
         return list;
     }
 
+    /**
+     * method to find places around place with coordinates x, y
+     * method connect to google maps API
+     * method to searching through pages of results
+     * @param x latitude
+     * @param y longitude
+     * @param type - tyope of place
+     * @return list of found places
+     */
     static private ArrayList<String> find( double x, double y, String type, String nextToken )
     {
         String URL;

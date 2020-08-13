@@ -3,22 +3,22 @@ import java.util.ArrayList;
 public class Scraping
 {
     //coordinates of area
-    final static double rightX = 28.749855;
-    final static double downY = 76.941338;
-    final static double leftX = 28.511826;
-    final static double upY = 77.337701;
+    private final static double rightX = 28.749855;
+    private final static double downY = 76.941338;
+    private final static double leftX = 28.511826;
+    private final static double upY = 77.337701;
 
     //ammount of checkpoints
-    final static int samples = 71;
+    private final static int samples = 71;
 
     public static void main(String[] args)
     {
         //loadIDs();
-        loadOpinions();
+        loadOpinions(0, 30000);
     }
 
     /**
-     * method to load IDs of places in area
+     * method to load IDs of places from database
      */
     static void loadIDs()
     {
@@ -54,15 +54,31 @@ public class Scraping
     /**
      * method to load opinions of places
      */
-    private static void loadOpinions()
+    private static void loadOpinions( int p, int k )
     {
         ArrayList<String> ids = DataBaseService.getIDs();
-        for( String id : ids )
+        for( int i = p; i < k; ++i )
         {
-            ArrayList<String> opinions = OpinionsFinding.getOpinions(id);
-            for( String opinion : opinions )
+            String id = ids.get(i);
+            ArrayList<Opinion> opinions = OpinionsFinding.getOpinions(id);
+            for( Opinion opinion: opinions )
             {
-                DataBaseService.addOpinion(id, opinion);
+                Place place = opinion.getPlace();
+
+                String placeID = place.getID();
+                String opinionText = opinion.getText();
+                double opinionRating = opinion.getRating();
+
+                try
+                {
+                    DataBaseService.addPlace(place);
+                    DataBaseService.addOpinion(placeID, opinionText, opinionRating);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
             }
         }
     }

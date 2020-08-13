@@ -6,7 +6,7 @@ class DataBaseService
     final static private String dbName = "scraping.db";
     static void prepareEnvironment()
     {
-        //createNewDatabase(dbName);
+        //createNewDatabase(dbName); // uncomment when using the app for the first time
         createIDTable(dbName);
         createPlaceTable(dbName);
         createOpinionTable(dbName);
@@ -73,8 +73,9 @@ class DataBaseService
 
         String query = "CREATE TABLE IF NOT EXISTS opinion" +
                 "(" +
-                "id text PRIMARY KEY,\n" +
-                "text text NOT NULL" +
+                "id text NOT NULL,\n" +
+                "text text NOT NULL," +
+                "rating REAL" +
                 ")";
         try (Connection conn = DriverManager.getConnection(url); Statement stmt = conn.createStatement())
         {
@@ -120,7 +121,6 @@ class DataBaseService
                 String id = rs.getString("id");
                 list.add(id);
             }
-            stmt.close();
         }
         catch (SQLException e)
         {
@@ -129,13 +129,15 @@ class DataBaseService
         return list;
     }
 
-    static void addOpinion( String id, String opinion )
+    static void addOpinion( String id, String opinion, double rating )
     {
         String url = "jdbc:sqlite:H:/projekty/scraping/databases/" + dbName;
 
+        opinion = opinion.replace("'", "''");
+
         String query = "INSERT INTO opinion" +
-                "(id, text)\n" +
-                "VALUES ('" + id + "', '" + opinion +"')";
+                "(id, text, rating)\n" +
+                "VALUES ('" + id + "', '" + opinion +"'," + rating + ")";
         try (Connection conn = DriverManager.getConnection(url); Statement stmt = conn.createStatement())
         {
             stmt.execute(query);
@@ -143,6 +145,31 @@ class DataBaseService
         catch (SQLException e)
         {
             System.out.println(e.getMessage());
+        }
+    }
+
+    static void addPlace( Place place )
+    {
+        String url = "jdbc:sqlite:H:/projekty/scraping/databases/" + dbName;
+
+        String id = place.getID();
+        String name = place.getName();
+        String address = place.getAddress();
+        double rating = place.getRating();
+
+        name = name.replace("'", "''");
+        address = address.replace("'", "''");
+
+        String query = "INSERT INTO place" +
+                "(id, name, adress, rating)\n" +
+                "VALUES ('" + id + "', '" + name + "', '" + address + "', " + rating + ")";
+        try (Connection conn = DriverManager.getConnection(url); Statement stmt = conn.createStatement())
+        {
+            stmt.execute(query);
+        }
+        catch (SQLException e)
+        {
+            System.out.println(e.getMessage() + " nr1 ");
         }
     }
 
