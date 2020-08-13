@@ -27,10 +27,15 @@ class OpinionsFinding {
         }
 
         JSONObject results;
-        if( json != null )
+        try
+        {
             results = json.getJSONObject("result");
-        else
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
             return list;
+        }
 
         String name = results.getString("name");
         String address = results.getString("formatted_address");
